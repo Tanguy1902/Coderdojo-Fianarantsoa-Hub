@@ -179,6 +179,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const updated = { ...prev, ...partialUser };
       if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && typeof window !== "undefined") {
         sessionStorage.setItem("demo_user", JSON.stringify(updated));
+      } else if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`cd_user_profile_${updated.id}`, JSON.stringify(updated));
+        } catch {}
       }
       return updated;
     });
