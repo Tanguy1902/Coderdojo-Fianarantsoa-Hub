@@ -1,14 +1,20 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDocs,
+  increment,
+  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import {
   BadgeItem,
+  DetectiveScore,
   GuessWhoGame,
   MilestoneItem,
 } from "@/types";
@@ -72,6 +78,60 @@ export async function submitGuessWhoVote(
 
   } catch (error) {
     handleGamificationError(error, `submitGuessWhoVote(${gameId})`);
+  }
+}
+
+export async function hasUserVotedOnGame(
+  gameId: string,
+  userId: string
+): Promise<boolean> {
+  try {
+    const votesQuery = query(
+      collection(db, "guessWhoGames", gameId, "votes"),
+      where("userId", "==", userId),
+      limit(1)
+    );
+    const snapshot = await getDocs(votesQuery);
+    return !snapshot.empty;
+  } catch (error) {
+    handleGamificationError(error, `hasUserVotedOnGame(${gameId})`);
+    return false;
+  }
+}
+
+export function subscribeToGuessWhoScores(
+  callback: (scores: DetectiveScore[]) => void
+) {
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, orderBy("xp", "desc"), limit(10));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const scores: DetectiveScore[] = snapshot.docs.map((d, idx) => ({
+        userId: d.id,
+        name: (d.data().name as string) || "Anonyme",
+        xp: (d.data().xp as number) || 0,
+        rank: idx + 1,
+      }));
+      callback(scores);
+    },
+    (error) => handleGamificationError(error, "subscribeToGuessWhoScores")
+  );
+}
+
+export async function awardGuessWhoXp(
+  userId: string,
+  xpAmount: number
+): Promise<void> {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      xp: increment(xpAmount),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleGamificationError(error, `awardGuessWhoXp(${userId})`);
   }
 }
 
