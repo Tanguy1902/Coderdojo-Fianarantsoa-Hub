@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, type ChangeEvent } from "react";
+import { useRef, useCallback, useEffect, type ChangeEvent } from "react";
 import { z } from "zod";
 import { Controller, useFormContext } from "react-hook-form";
 import { Camera, CloudUpload, Upload } from "lucide-react";
@@ -36,18 +36,21 @@ export function MemoryUploadModal({
   onClose,
   onSubmit,
 }: MemoryUploadModalProps) {
-  const { control, handleSubmit } = useFormContext<MemoryFormValues>();
+  const { control, handleSubmit, formState } = useFormContext<MemoryFormValues>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevSubmitCount = useRef(formState.submitCount);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (fileInputRef.current) fileInputRef.current.value = "";
     onClose();
-  };
+  }, [onClose]);
 
-  const handleSubmitSuccess = (values: MemoryFormValues) => {
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    onSubmit(values);
-  };
+  useEffect(() => {
+    if (formState.submitCount > prevSubmitCount.current && !formState.isSubmitting) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+    prevSubmitCount.current = formState.submitCount;
+  }, [formState.submitCount, formState.isSubmitting]);
 
   if (!open) return null;
 
@@ -71,7 +74,7 @@ export function MemoryUploadModal({
         )}
       </div>
 
-      <form onSubmit={handleSubmit(handleSubmitSuccess)} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Controller
           name="title"
           control={control}
