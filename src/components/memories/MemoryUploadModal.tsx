@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { ChangeEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import { z } from "zod";
 import { Controller, useFormContext } from "react-hook-form";
 import { Camera, CloudUpload, Upload } from "lucide-react";
@@ -37,6 +37,17 @@ export function MemoryUploadModal({
   onSubmit,
 }: MemoryUploadModalProps) {
   const { control, handleSubmit } = useFormContext<MemoryFormValues>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClose = () => {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onClose();
+  };
+
+  const handleSubmitSuccess = (values: MemoryFormValues) => {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onSubmit(values);
+  };
 
   if (!open) return null;
 
@@ -46,7 +57,7 @@ export function MemoryUploadModal({
     <Modal
       title="Ajouter un souvenir (Multi-photos)"
       icon={<Camera className="w-5 h-5 text-primary" />}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="max-w-xl"
     >
       <div className="flex justify-between items-center mb-4">
@@ -60,7 +71,7 @@ export function MemoryUploadModal({
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit(handleSubmitSuccess)} className="flex flex-col gap-4">
         <Controller
           name="title"
           control={control}
@@ -113,6 +124,7 @@ export function MemoryUploadModal({
               type="file"
               accept="image/*"
               multiple
+              ref={fileInputRef}
               onChange={onFileChange}
               className="w-full text-xs font-mono text-on-surface bg-surface-container-low border border-outline-variant/40 rounded-xl p-2.5 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-on-primary hover:file:bg-surface-tint"
             />
@@ -167,7 +179,7 @@ export function MemoryUploadModal({
         <div className="flex justify-end gap-3 mt-4">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-5 py-2.5 rounded-full font-mono text-xs font-semibold text-on-surface-variant hover:bg-surface-container-high"
           >
             Annuler
