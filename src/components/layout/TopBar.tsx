@@ -8,7 +8,6 @@ import { Bell, Mail } from "lucide-react";
 import { InboxModal } from "./InboxModal";
 import { NotificationsModal } from "./NotificationsModal";
 import { PostNotificationModal } from "./PostNotificationModal";
-import { subscribeToReceivedMessages } from "@/lib/firebase/messaging";
 import { subscribeToTotalUnreadCount } from "@/lib/firebase/messaging";
 import {
   subscribeToNotifications,
